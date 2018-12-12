@@ -63,4 +63,5 @@ TukeyHSD(aov.tukey)
 
 # Check normality of data
 
+# check
 
