@@ -39,17 +39,23 @@ ggplot(data = SNX1_join, mapping = aes(x = siRNA, y = percentage,))+
   labs(y = "Percentage cells with tubules > 2um")
 
 
-# Calculate SEM
-SNX1_agg <- aggregate(percentage~siRNA, data = SNX1_join,
-                      FUN = function(x) c(mean = mean(x), sd = sd(x),
-                                          n = length(x)))
-SNX1_agg$se <- SNX1_agg$x.sd / sqrt(SNX1_agg$x.n)
-SNX1_agg_2 <- do.call(data.frame, SNX1_agg)
-colnames(SNX1_agg_2) <- c("siRNA", "mean", "sd", "n", "se")
+# Calculates mean, sd, se and IC
 
+my_sum <- SNX1_join %>%
+  group_by(siRNA) %>%
+  summarise(
+    n=n(),
+    mean=mean(percentage),
+    sd=sd(percentage)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
 
-SNX1_agg_2$se <- SNX1_agg_2$percentage.sd / sqrt(SNX1_agg_2$percentage.n)
-
+# Plot histogram with SEM as error bars
+ggplot(my_sum) +
+  geom_bar( aes(x=siRNA, y=mean), stat="identity", fill="skyblue", alpha=0.5) +
+  geom_errorbar( aes(x=siRNA, ymin=mean-se, ymax=mean+se), width=0.4, colour="orange", alpha=0.9, size=1)+
+  ylab("Percentage cells with tubule > 2um")
 
 # Anova test
 
@@ -61,7 +67,6 @@ anova(lm_SNX1_join)
 aov.tukey<-aov(percentage~siRNA , data=SNX1_join)
 TukeyHSD(aov.tukey)
 
-# Check normality of data
 
-# check
+
 
